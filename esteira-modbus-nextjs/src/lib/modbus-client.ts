@@ -17,6 +17,7 @@ export class ModbusClient {
   private timeout: number;
   private connected: boolean = false;
   private reconnectInterval: NodeJS.Timeout | null = null;
+  private shouldAutoReconnect: boolean = true; // Flag para controlar auto-reconexão
 
   constructor(host: string, port: number, timeout: number = 5000) {
     this.host = host;
@@ -28,6 +29,9 @@ export class ModbusClient {
    * Conecta ao servidor Modbus TCP
    */
   async connect(): Promise<boolean> {
+    // Reabilitar auto-reconexão ao conectar explicitamente
+    this.shouldAutoReconnect = true;
+
     return new Promise((resolve, reject) => {
       try {
         this.socket = new net.Socket();
@@ -61,8 +65,8 @@ export class ModbusClient {
             `Erro ao conectar com Slave Pool (${this.host}:${this.port}): ${err.message}`,
             { host: this.host, port: this.port, error: err.message },
           );
-          // Não rejeita imediatamente - tenta reconectar
-          if (!this.reconnectInterval) {
+          // Só reconecta se auto-reconexão estiver habilitada
+          if (this.shouldAutoReconnect && !this.reconnectInterval) {
             this.startReconnect();
           }
         });
@@ -73,15 +77,18 @@ export class ModbusClient {
             "Modbus Client",
             `Conexão fechada com ${this.host}:${this.port}`,
           );
-          criticalAlerts.addAlert(
-            "connection_lost",
-            "warning",
-            `Conexão perdida com Slave Pool (${this.host}:${this.port}). Tentando reconectar...`,
-            { host: this.host, port: this.port },
-          );
-          // Inicia reconexão automática
-          if (!this.reconnectInterval) {
-            this.startReconnect();
+          // Só tenta reconectar se auto-reconexão estiver habilitada
+          if (this.shouldAutoReconnect) {
+            criticalAlerts.addAlert(
+              "connection_lost",
+              "warning",
+              `Conexão perdida com Slave Pool (${this.host}:${this.port}). Tentando reconectar...`,
+              { host: this.host, port: this.port },
+            );
+            // Inicia reconexão automática
+            if (!this.reconnectInterval) {
+              this.startReconnect();
+            }
           }
         });
 
@@ -137,6 +144,9 @@ export class ModbusClient {
    * Desconecta do servidor Modbus
    */
   disconnect(): void {
+    // IMPORTANTE: Desabilitar auto-reconexão antes de fechar
+    this.shouldAutoReconnect = false;
+
     if (this.reconnectInterval) {
       clearInterval(this.reconnectInterval);
       this.reconnectInterval = null;

@@ -8,8 +8,13 @@ import { getMainServerState } from "@/lib/server-state";
 /**
  * Verifica se o sistema deveria estar rodando e reconecta automaticamente
  * Chamado quando o servidor Next.js reinicia
+ *
+ * DESABILITADO: Estava causando reconexões automáticas indesejadas
  */
 export async function autoRestoreController() {
+  // DESABILITADO - não reconectar automaticamente
+  // O usuário deve iniciar manualmente via dashboard
+  /*
   const savedState = getMainServerState();
   const controller = getController();
 
@@ -32,7 +37,8 @@ export async function autoRestoreController() {
       console.error("[AutoRestore] Erro ao restaurar:", error);
     }
   }
+  */
 }
 
-// Executar automaticamente quando o módulo é carregado
-autoRestoreController();
+// NÃO executar automaticamente - deixar usuário controlar
+// autoRestoreController();

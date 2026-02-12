@@ -3,7 +3,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { getController, initializeController } from "../../controller-instance";
+import { getController, initializeController, destroyController } from "../../controller-instance";
 import { updateMainServerState } from "@/lib/server-state";
 
 export async function POST(request: NextRequest) {
@@ -52,10 +52,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      await controller.stop();
-
-      // Atualizar estado
-      updateMainServerState(false, 0);
+      // IMPORTANTE: Destruir completamente o controller para evitar auto-reconexão
+      await destroyController();
 
       return NextResponse.json({
         success: true,
