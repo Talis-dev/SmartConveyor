@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CogIcon, ChartBarIcon, HomeIcon } from "@heroicons/react/24/outline";
 import CriticalAlertsWidget from "@/components/CriticalAlertsWidget";
 
@@ -8,8 +9,19 @@ export default function HomePage() {
       <CriticalAlertsWidget />
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Sistema de Esteira Modbus
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/logo.png"
+              alt="SmartConveyor Logo"
+              width={518}
+              height={219}
+              priority
+              className="max-w-md w-full h-auto"
+            />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">
+            Direcionamento Inteligente de Esteira Distribuidora
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Gerenciamento inteligente de esteira distribuidora com comunicação
