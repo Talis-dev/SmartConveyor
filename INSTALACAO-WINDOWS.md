@@ -15,7 +15,7 @@ Antes de começar, certifique-se de ter:
 1. Abra o PowerShell como **Administrador**
 2. Navegue até a pasta do projeto:
    ```powershell
-   cd "C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor"
+   cd "C:\Users\usuario\Desktop\Repositorio\SmartConveyor"
    ```
 3. Execute o build:
    ```powershell
@@ -28,7 +28,7 @@ Antes de começar, certifique-se de ter:
 No PowerShell, execute:
 
 ```powershell
-New-Item -ItemType Directory -Path "C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor\logs" -Force
+New-Item -ItemType Directory -Path "C:\Users\usuario\Desktop\Repositorio\SmartConveyor\logs" -Force
 ```
 
 ## 🎯 Método A: Agendador de Tarefas - Interface Gráfica
@@ -79,7 +79,7 @@ Configure os seguintes campos:
      ```
    - **Iniciar em (opcional)**:
      ```
-     C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor
+     C:\Users\usuario\Desktop\Repositorio\SmartConveyor
      ```
 3. Clique em **"OK"**
 
@@ -132,7 +132,7 @@ Configure as seguintes opções:
 ### Passo 2: Navegar até a Pasta do Projeto
 
 ```powershell
-cd "C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor"
+cd "C:\Users\usuario\Desktop\Repositorio\SmartConveyor"
 ```
 
 ### Passo 3: Criar a Ação (o que executar)
@@ -141,7 +141,7 @@ cd "C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor"
 $action = New-ScheduledTaskAction `
   -Execute "C:\Program Files\nodejs\node.exe" `
   -Argument "node_modules\.bin\next start" `
-  -WorkingDirectory "C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor"
+  -WorkingDirectory "C:\Users\usuario\Desktop\Repositorio\SmartConveyor"
 ```
 
 ### Passo 4: Criar o Gatilho (quando executar)
@@ -304,7 +304,7 @@ Get-ScheduledTask -TaskName "SmartConveyor" | Get-ScheduledTaskInfo
 **Problema**: Projeto não inicia
 
 - **Solução**: Verifique se o build foi feito: `npm run build`
-- Verifique logs em: `C:\Users\thali\Desktop\Repositorio Talis\SmartConveyor\logs`
+- Verifique logs em: `C:\Users\usuario\Desktop\Repositorio\SmartConveyor\logs`
 
 ---
 
