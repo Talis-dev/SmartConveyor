@@ -275,14 +275,9 @@ export class ConveyorController {
         // Modo Server: lê dos buffers do próprio servidor
         if (!this.slavePoolServer) return;
 
-        // Lê cada coil individualmente do buffer do servidor
-        const startAddress = Math.min(
-          ...this.config.inputSensors.map((s) => s.address),
-        );
-        const quantity = this.config.inputSensors.length;
-
-        for (let i = 0; i < quantity; i++) {
-          const coilValue = this.slavePoolServer.readCoil(startAddress + i);
+        // Lê cada coil individualmente do buffer do servidor usando os inputAddress das outputs
+        for (const output of this.config.outputs) {
+          const coilValue = this.slavePoolServer.readCoil(output.inputAddress);
           coilsData.push(coilValue);
         }
       } else {
@@ -295,10 +290,10 @@ export class ConveyorController {
 
         if (!slaveClient.isActuallyConnected()) return;
 
-        const startAddress = Math.min(
-          ...this.config.inputSensors.map((s) => s.address),
-        );
-        const quantity = this.config.inputSensors.length;
+        const inputAddresses = this.config.outputs.map((o) => o.inputAddress);
+        const startAddress = Math.min(...inputAddresses);
+        const maxAddress = Math.max(...inputAddresses);
+        const quantity = maxAddress - startAddress + 1;
 
         // Valida endereços antes de ler
         if (startAddress < 0 || quantity <= 0 || quantity > 2000) {
@@ -317,7 +312,11 @@ export class ConveyorController {
           return;
         }
 
-        coilsData = response.coils;
+        // Mapeia os valores lidos para cada output baseado no inputAddress
+        for (const output of this.config.outputs) {
+          const index = output.inputAddress - startAddress;
+          coilsData.push(response.coils[index] || false);
+        }
       }
 
       // Sucesso - reseta contador de erros
@@ -329,15 +328,15 @@ export class ConveyorController {
 
         // Detectou pulso (borda de subida)
         if (currentState && !previousState) {
-          const sensor = this.config.inputSensors[index];
-          if (sensor) {
+          const output = this.config.outputs[index];
+          if (output && output.enabled) {
             systemLogger.info(
               "Controller",
-              `Pulso detectado no sensor ${sensor.address} - Produto tipo ${sensor.productType}`,
+              `Pulso detectado no inputAddress ${output.inputAddress} - Produto para saída ${output.id} (${output.name})`,
             );
 
-            // Adiciona produto à fila
-            this.queueManager.addProduct(sensor.productType);
+            // Adiciona produto à fila (usa o ID da saída como tipo de produto)
+            this.queueManager.addProduct(output.id);
           }
         }
       });

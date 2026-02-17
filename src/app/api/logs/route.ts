@@ -52,17 +52,40 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
-    systemLogger.clearLogs();
-    return NextResponse.json({
-      success: true,
-      message: "Logs em memória limpos com sucesso",
-    });
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get("category");
+    const level = searchParams.get("level");
+
+    if (category) {
+      // Deleta logs de uma categoria específica
+      const deleted = systemLogger.deleteLogsByCategory(category);
+      return NextResponse.json({
+        success: true,
+        message: `${deleted} logs da categoria "${category}" deletados com sucesso`,
+        deleted,
+      });
+    } else if (level) {
+      // Deleta logs de um nível específico
+      const deleted = systemLogger.deleteLogsByLevel(level);
+      return NextResponse.json({
+        success: true,
+        message: `${deleted} logs do nível "${level}" deletados com sucesso`,
+        deleted,
+      });
+    } else {
+      // Limpa todos os logs em memória
+      systemLogger.clearLogs();
+      return NextResponse.json({
+        success: true,
+        message: "Logs em memória limpos com sucesso",
+      });
+    }
   } catch (error: any) {
-    console.error("[API] Erro ao limpar logs:", error);
+    console.error("[API] Erro ao deletar logs:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao limpar logs" },
+      { error: error.message || "Erro ao deletar logs" },
       { status: 500 },
     );
   }

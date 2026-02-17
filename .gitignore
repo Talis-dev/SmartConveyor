@@ -36,3 +36,8 @@ next-env.d.ts
 # data (configurações persistentes)
 /data
 data/
+
+# logs (arquivos de log do sistema)
+/logs
+logs/
+*.log

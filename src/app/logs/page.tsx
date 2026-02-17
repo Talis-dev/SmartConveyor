@@ -98,6 +98,76 @@ export default function SystemLogsPage() {
     }
   };
 
+  // Deleta logs por categoria
+  const deleteByCategory = async () => {
+    if (selectedCategory === "all") {
+      alert("Selecione uma categoria específica para deletar");
+      return;
+    }
+
+    const count = logs.filter(
+      (log) => log.category === selectedCategory,
+    ).length;
+    if (
+      !confirm(
+        `Deseja deletar ${count} logs da categoria "${selectedCategory}"?`,
+      )
+    )
+      return;
+
+    try {
+      const response = await fetch(`/api/logs?category=${selectedCategory}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove logs da categoria localmente
+        setLogs(logs.filter((log) => log.category !== selectedCategory));
+        alert(`${count} logs deletados com sucesso!`);
+        // Reseta filtro de categoria
+        setSelectedCategory("all");
+      }
+    } catch (error) {
+      console.error("Erro ao deletar logs:", error);
+      alert("Erro ao deletar logs");
+    }
+  };
+
+  // Deleta logs por nível
+  const deleteByLevel = async () => {
+    if (selectedLevel === "all") {
+      alert("Selecione um nível específico para deletar");
+      return;
+    }
+
+    const count = logs.filter((log) => log.level === selectedLevel).length;
+    if (
+      !confirm(
+        `Deseja deletar ${count} logs do nível "${selectedLevel.toUpperCase()}"?`,
+      )
+    )
+      return;
+
+    try {
+      const response = await fetch(`/api/logs?level=${selectedLevel}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove logs do nível localmente
+        setLogs(logs.filter((log) => log.level !== selectedLevel));
+        alert(`${count} logs deletados com sucesso!`);
+        // Reseta filtro de nível
+        setSelectedLevel("all");
+      }
+    } catch (error) {
+      console.error("Erro ao deletar logs:", error);
+      alert("Erro ao deletar logs");
+    }
+  };
+
   // Exporta logs
   const exportLogs = () => {
     const dataStr = JSON.stringify(filteredLogs, null, 2);
@@ -183,87 +253,124 @@ export default function SystemLogsPage() {
     }
   };
 
-  // Cor por nível
-  const getLevelColor = (level: string) => {
+  // Cor do texto por nível (estilo terminal)
+  const getLevelTextColor = (level: string) => {
     switch (level) {
       case "error":
-        return "bg-red-50 border-red-200 text-red-900";
+        return "text-red-400";
       case "warning":
-        return "bg-yellow-50 border-yellow-200 text-yellow-900";
+        return "text-yellow-400";
       case "success":
-        return "bg-green-50 border-green-200 text-green-900";
+        return "text-green-400";
       case "debug":
-        return "bg-purple-50 border-purple-200 text-purple-900";
+        return "text-purple-400";
       default:
-        return "bg-blue-50 border-blue-200 text-blue-900";
+        return "text-blue-400";
     }
+  };
+
+  // Estado de expansão dos logs
+  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (logId: string) => {
+    const newExpanded = new Set(expandedLogs);
+    if (newExpanded.has(logId)) {
+      newExpanded.delete(logId);
+    } else {
+      newExpanded.add(logId);
+    }
+    setExpandedLogs(newExpanded);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
             <div className="flex items-center gap-4">
               <Link
                 href="/config"
-                className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
+                className="text-gray-600 hover:text-gray-900 flex items-center gap-2 shrink-0"
               >
                 <ArrowLeftIcon className="w-5 h-5" />
-                Voltar
+                <span className="hidden sm:inline">Voltar</span>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">
+                <h1 className="text-xl md:text-3xl font-bold text-gray-800">
                   Logs do Sistema
                 </h1>
-                <p className="text-gray-600 mt-1">
-                  Visualize e filtre todos os eventos do sistema
+                <p className="text-xs md:text-sm text-gray-600 mt-1">
+                  Visualize e filtre eventos
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={fetchLogs}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center gap-2"
+                className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center gap-2 text-sm"
+                title="Atualizar logs"
               >
                 <ArrowPathIcon className="w-4 h-4" />
-                Atualizar
+                <span className="hidden sm:inline">Atualizar</span>
               </button>
               <button
                 onClick={() => setAutoRefresh(!autoRefresh)}
-                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                className={`px-3 py-2 rounded-lg flex items-center gap-2 transition text-sm ${
                   autoRefresh
                     ? "bg-green-500 text-white"
                     : "bg-gray-200 text-gray-700"
                 }`}
+                title="Auto-refresh a cada 3s"
               >
                 <ArrowPathIcon
                   className={`w-4 h-4 ${autoRefresh ? "animate-spin" : ""}`}
                 />
-                Auto-Refresh
+                <span className="hidden sm:inline">Auto</span>
               </button>
               <button
                 onClick={exportLogs}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2"
+                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2 text-sm"
+                title="Exportar logs filtrados"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
-                Exportar
+                <span className="hidden md:inline">Exportar</span>
               </button>
+              {selectedLevel !== "all" && (
+                <button
+                  onClick={deleteByLevel}
+                  className="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center gap-2 text-sm"
+                  title={`Deletar logs do nível ${selectedLevel}`}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  <span className="hidden md:inline">Deletar Nível</span>
+                </button>
+              )}
+              {selectedCategory !== "all" && (
+                <button
+                  onClick={deleteByCategory}
+                  className="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center gap-2 text-sm"
+                  title={`Deletar logs da categoria ${selectedCategory}`}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  <span className="hidden md:inline">Deletar Cat.</span>
+                </button>
+              )}
               {selectedDate === "memory" && (
                 <button
                   onClick={clearLogs}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2"
+                  className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm"
+                  title="Limpar todos os logs em memória"
                 >
                   <TrashIcon className="w-4 h-4" />
-                  Limpar
+                  <span className="hidden md:inline">Limpar</span>
                 </button>
               )}
             </div>
           </div>
 
           {/* Filtros */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {/* Busca */}
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -329,7 +436,7 @@ export default function SystemLogsPage() {
           </div>
 
           {/* Stats */}
-          <div className="mt-4 flex gap-4 text-sm text-gray-600">
+          <div className="mt-4 flex flex-wrap gap-3 text-xs md:text-sm text-gray-600">
             <span>
               Total: <strong>{logs.length}</strong> logs
             </span>
@@ -345,53 +452,78 @@ export default function SystemLogsPage() {
           </div>
         </div>
 
-        {/* Logs List */}
-        <div className="space-y-2">
+        {/* Logs Console */}
+        <div className="bg-gray-950 rounded-lg shadow-2xl overflow-hidden">
           {loading ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="p-8 text-center">
               <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando logs...</p>
+              <p className="text-gray-400">Carregando logs...</p>
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <p className="text-gray-600">Nenhum log encontrado</p>
+            <div className="p-8 text-center">
+              <p className="text-gray-500">Nenhum log encontrado</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {[...filteredLogs].reverse().map((log) => (
-                <div
-                  key={log.id}
-                  className={`rounded-lg border-2 p-4 transition hover:shadow-md ${getLevelColor(log.level)}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">{getLevelIcon(log.level)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="font-semibold text-xs px-2 py-1 bg-white rounded">
-                          {log.category}
+            <div className="font-mono text-xs">
+              {[...filteredLogs].reverse().map((log) => {
+                const isExpanded = expandedLogs.has(log.id);
+                const hasData = log.data && Object.keys(log.data).length > 0;
+
+                return (
+                  <div
+                    key={log.id}
+                    className="border-b border-gray-800 hover:bg-gray-900/50 transition"
+                  >
+                    <div
+                      className={`flex items-start gap-3 px-4 py-2 ${hasData ? "cursor-pointer" : ""}`}
+                      onClick={() => hasData && toggleExpand(log.id)}
+                    >
+                      {/* Timestamp */}
+                      <span className="text-gray-500 shrink-0">
+                        {new Date(log.timestamp).toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          fractionalSecondDigits: 3,
+                        })}
+                      </span>
+
+                      {/* Ícone de nível */}
+                      <span className="shrink-0">
+                        {getLevelIcon(log.level)}
+                      </span>
+
+                      {/* Categoria */}
+                      <span className="text-cyan-400 shrink-0 min-w-[120px]">
+                        [{log.category}]
+                      </span>
+
+                      {/* Mensagem */}
+                      <span
+                        className={`flex-1 ${getLevelTextColor(log.level)}`}
+                      >
+                        {log.message}
+                      </span>
+
+                      {/* Indicador de expansão */}
+                      {hasData && (
+                        <span className="text-gray-600 shrink-0">
+                          {isExpanded ? "▼" : "▶"}
                         </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(log.timestamp).toLocaleString("pt-BR")}
-                        </span>
-                        <span className="text-xs font-mono px-2 py-1 bg-white rounded opacity-75">
-                          {log.level.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium mb-2">{log.message}</p>
-                      {log.data && (
-                        <details className="text-xs">
-                          <summary className="cursor-pointer hover:underline mb-1">
-                            Dados adicionais
-                          </summary>
-                          <pre className="bg-white p-2 rounded overflow-x-auto">
-                            {JSON.stringify(log.data, null, 2)}
-                          </pre>
-                        </details>
                       )}
                     </div>
+
+                    {/* Dados expandidos */}
+                    {isExpanded && hasData && (
+                      <div className="px-4 pb-3 pl-[200px]">
+                        <pre className="text-gray-300 text-xs overflow-x-auto bg-gray-900 p-3 rounded">
+                          {JSON.stringify(log.data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

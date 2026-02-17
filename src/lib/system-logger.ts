@@ -143,6 +143,28 @@ class SystemLogger {
   }
 
   /**
+   * Deleta logs de uma categoria específica
+   */
+  deleteLogsByCategory(category: string): number {
+    const initialCount = this.logs.length;
+    this.logs = this.logs.filter((log) => log.category !== category);
+    const deletedCount = initialCount - this.logs.length;
+    this.notifyListeners();
+    return deletedCount;
+  }
+
+  /**
+   * Deleta logs de um nível específico
+   */
+  deleteLogsByLevel(level: string): number {
+    const initialCount = this.logs.length;
+    this.logs = this.logs.filter((log) => log.level !== level);
+    const deletedCount = initialCount - this.logs.length;
+    this.notifyListeners();
+    return deletedCount;
+  }
+
+  /**
    * Adiciona um listener para mudanças nos logs
    */
   subscribe(callback: (logs: SystemLog[]) => void) {
@@ -201,11 +223,10 @@ class SystemLogger {
     try {
       const today = new Date();
       const logFile = path.join(this.logsDir, this.getLogFileName(today));
-      
+
       // Agrupa logs por linha (JSONL - JSON Lines)
-      const logLines = this.writeQueue
-        .map((log) => JSON.stringify(log))
-        .join("\n") + "\n";
+      const logLines =
+        this.writeQueue.map((log) => JSON.stringify(log)).join("\n") + "\n";
 
       // Append ao arquivo do dia
       fs.appendFileSync(logFile, logLines, "utf-8");
@@ -225,9 +246,12 @@ class SystemLogger {
     this.rotateLogs();
 
     // Executa rotação a cada 1 hora
-    setInterval(() => {
-      this.rotateLogs();
-    }, 60 * 60 * 1000); // 1 hora
+    setInterval(
+      () => {
+        this.rotateLogs();
+      },
+      60 * 60 * 1000,
+    ); // 1 hora
   }
 
   /**
@@ -262,14 +286,14 @@ class SystemLogger {
   readLogsFromFile(date: Date): SystemLog[] {
     try {
       const logFile = path.join(this.logsDir, this.getLogFileName(date));
-      
+
       if (!fs.existsSync(logFile)) {
         return [];
       }
 
       const content = fs.readFileSync(logFile, "utf-8");
       const lines = content.trim().split("\n");
-      
+
       return lines
         .filter((line) => line.trim())
         .map((line) => JSON.parse(line) as SystemLog);
@@ -314,7 +338,7 @@ class SystemLogger {
       clearInterval(this.writeInterval);
       this.writeInterval = null;
     }
-    
+
     // Flush final
     this.flushLogsToDisk();
   }
